@@ -1,0 +1,9 @@
+Créer les classes base_livre et base_bibli
+
+Créer les sous-classes utiles (?)
+
+Créer simple_bibli avec quelques livres
+
+Ajouter la méthode alimenter()
+
+Construire bibli_scrap qui récupère depuis une url
