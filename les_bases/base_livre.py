@@ -1,8 +1,13 @@
-#!/bin/env python3
 import requests
 import magic
 from ebooklib import epub
 import PyPDF2
+import os
+
+import urllib3
+import ssl
+urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)  # désactive l'avertissement de non-vérif
+ssl._create_default_https_context = ssl._create_unverified_context  # permet de télécharger sans verif
 
 class base_livre:
     def __init__(self, ressource):
@@ -13,9 +18,7 @@ class base_livre:
             # Vérifier si ressource est une URL ou un fichier local
             if self.est_url(ressource):
                 try:
-                    book = requests.get(self.ressource) #Récupere le contenu de la page 
-                    book.raise_for_status()             # Gère les erreurs HTTP
-                    self.contenu = book.content         #renvoie le contenu de la page, en octet
+                    self.ajouter_depuis_url()
                 except requests.exceptions.RequestException as e:
                     print(f"Une erreur s'est produite lors de la requête HTTP : {e}")
             else:
@@ -28,6 +31,23 @@ class base_livre:
         except Exception as e:
             raise NotImplementedError("Erreur lors de l'initialisation du livre : {}".format(str(e)))
 
+    def ajouter_depuis_url(self):
+        if not os.path.exists("./Livres"):  # si le dossier qui contient les livres n'existe pas on le créé
+            os.mkdir("./Livres")
+
+        book = requests.get(self.ressource, verify=False)  # Récupere le contenu de la page
+        book.raise_for_status()
+
+        i = self.ressource.rfind('/')   # on garde la fin de l'url pour créer le nom du fichier
+        nom_fichier = self.ressource[i:]
+
+        with open("./Livres/" + nom_fichier, 'wb') as f:
+            f.write(book.content)
+
+        self.ressource = "./Livres/" + nom_fichier # maintenant la ressource est locale
+
+
+
     def est_url(self, chaine):
         return chaine.startswith("http://") or chaine.startswith("https://")
     
@@ -37,6 +57,7 @@ class base_livre:
                 # Utilisation de la bibliothèque python-magic pour déterminer le type MIME du contenu
                 mime_type = magic.Magic()
                 mime_info = mime_type.from_buffer(self.contenu)
+                print(mime_info)
             
                 # Identifier le type en fonction du type MIME
                 """ if detected_mime_type.endswith('epub'):  #livre ce terminant par epub
@@ -45,14 +66,16 @@ class base_livre:
                     return "PDF"
                 else:
                     return "Autre" """              
-                if "application/epub+zip" in mime_info:
+                if "EPUB document" in mime_info:
                     return "EPUB"
                 elif "application/pdf" in mime_info:
                     return "PDF"
                 else:
                     return "Autre"
             else:
+
                 return "Contenu vide"
+
         except Exception as e:
             raise NotImplementedError(f"Erreur lors de la détermination du type : {e}")
 
@@ -61,6 +84,7 @@ class base_livre:
         try:
             if self.contenu is not None:
                 if self.type() == "EPUB":
+                        print(self.type())
                         # Utiliser la bibliothèque ebooklib pour extraire le titre d'un fichier EPUB
                         book = epub.read_epub(self.ressource)
                         # En supposant que le premier titre soit le titre principal
@@ -68,6 +92,7 @@ class base_livre:
                         return title
                         
                 elif self.type() == "PDF":
+                    print(self.type())
                     try:
                         # Utiliser la bibliothèque PyPDF2 pour extraire le titre d'un fichier PDF
                         with open(self.ressource, 'rb') as pdf_file:
@@ -200,16 +225,16 @@ class base_livre:
             return "Contenu vide"
 
 
-"""
+
 # Test methodes avec un fichier EPUB
-livre = base_livre("lien")
+livre = base_livre("https://math.univ-angers.fr/~jaclin/biblio/livres/austen_jane_-_emma.epub")
 print("Type:", livre.type())
 print("Titre:",livre.titre())
 print("Auteur:", livre.auteur())
 print("Langue:", livre.langue())
 print("Sujet:", livre.sujet())
 print("Date:", livre.date())
-"""
+
 """
 # Test methodes avec un fichier PDF
 livre = base_livre("lien")

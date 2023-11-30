@@ -9,7 +9,7 @@ urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)  # désactiv
 ssl._create_default_https_context = ssl._create_unverified_context  # permet de télécharger sans verif
 
 FORMATS = ['pdf', 'epub']  # formats à rechercher dans le site source
-URL = "https://math.univ-angers.fr/~jaclin/biblio/livres/"
+URL = "https://tibo.life/index3.html"
 
 
 def scrap(url, profondeur=1, nbmax=25):
@@ -21,13 +21,24 @@ def scrap(url, profondeur=1, nbmax=25):
 		nbmax_ = nbmax  # stockage local de nbmax
 
 		# on ouvre la page en html pour chercher des liens vers .html
+		print(f'{url=}')
 		page = urlopen(url)
 		html_bytes = page.read()
 		html = html_bytes.decode("utf-8")
 
 		# on récupère les liens vers d'autres pages à explorer
 		liens = []
-		liens += re.findall(pattern='href=.*?html', string=html)
+		liens += re.findall(pattern='href="/.*?>', string=html)
+		liens += re.findall(pattern='href=\'/.*?>', string=html)
+		print(f'{liens=}')
+
+		for i in range(len(liens)) :
+			start_index = liens[i].find('\'')
+			liens[i] = liens[i][start_index+1:]
+			end_index = liens[i].find('\'')
+			liens[i] = liens[i][:end_index]
+
+			liens[i] = url[:len(url)-12] + liens[i]
 		print(f'{liens=}')
 
 		# on récupère les liens vers des livres de format valide
@@ -75,4 +86,4 @@ def scrap(url, profondeur=1, nbmax=25):
 		return 0
 
 
-scrap(URL, profondeur=1, nbmax=70)
+scrap(URL, profondeur=2, nbmax=70)

@@ -47,10 +47,11 @@ def alimenter(url) :
 		os.mkdir("./Livres")
 
 	# on télécharge les livres dans le dossier Livres
-	for i in range(10) : # VERSION TEST :on s'arrête à 10 livres
+	for i in range(40) :
 		r = requests.get(resultats[i], verify=False)
 		with open("./Livres/"+titres[i], 'wb') as f :
 			f.write(r.content)
 
 	return len(resultats) # permet de compter le nombre de livres telechargés -> pour scrap._nbmax
 
+alimenter(URL)
