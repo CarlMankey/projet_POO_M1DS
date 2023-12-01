@@ -3,16 +3,20 @@ import os
 from reportlab.pdfgen import canvas
 from ebooklib import epub
 
-from urllib.request import urlopen  # utilisé pour récupérer l'html du site source
+from urllib.request import urlopen, HTTPError  # utilisé pour récupérer l'html du site source
 import re  # expressions régulières pour rechercher les liens de livres dans l'html
 import ssl  # pour contourner les vérifications de la page
-import urllib3 # idem
+import urllib3  # idem
+from urllib.parse import urljoin
+
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)  # désactive l'avertissement de non-vérif
 ssl._create_default_https_context = ssl._create_unverified_context  # permet de télécharger sans verif
 
 FORMATS = ['pdf', 'epub']  # formats acceptés
 
-class Bibli:
+
+class BibliScrap:
+
 	def __init__(self, path):
 		self.path = path
 		self.livres = []  # Liste pour stocker les livres de la bibliothèque
@@ -35,7 +39,7 @@ class Bibli:
 		self.livres.append(livre)
 		print(f"Le livre {livre.titre()} a été ajouté à la bibliothèque.")
 
-	def alimenter(self, url):
+	def alimenter(self, url, nbmax):
 
 		# on récupère l'html du site source
 
@@ -51,10 +55,9 @@ class Bibli:
 		resultats = []
 		for format_livre in FORMATS:
 			resultats += re.findall(pattern='href=.*' + format_livre + '.*?>', string=html)
-		print(resultats)
 
 		# on finit de formater la liste d'url de livres,
-		# en retirant le "href=" et en ajoutant l'url complète pour
+		# en retirant le "href=" et en ajoutant l'url dossier pour
 		# avoir le chemin absolu des livres
 
 		for i in range(len(resultats)):
@@ -63,24 +66,21 @@ class Bibli:
 			end_index = resultats[i].find("\"")
 			resultats[i] = resultats[i][:end_index]
 
-			# on retrouve l'url du dossier courant du site
-			# (ex : en partant de http://site.fr/dossier/index , on doit
-			# récupérer http://site.fr/dossier/ )
-
-			index_dossier = url.rfind("/")
-			url_dossier = url[:index_dossier+1]
-			resultats[i] = url_dossier + resultats[i]
+			resultats[i] = urljoin(url,resultats[i])
 
 		# A présent résultats contient tous les liens de téléchargement.
 
-		for lien in resultats[1:15] :
+		for lien in resultats[:min(nbmax,len(resultats))]: # on télécharge au maximum nbmax livres
 			try:
 				livre = BaseLivre(lien)
 				self.ajouter(livre)
-			except ValueError as e :
+				nbmax -= 1
+			except ValueError as e:
 				print(f'erreur lors de l\'ajout du livre : {e}')
+		if nbmax == 0 :
+			print('Maximum de livres atteint.')
 
-		return len(resultats)  # permet de compter le nombre de livres telechargés -> pour scrap._nbmax
+		return nbmax  # permet de compter le nombre de livres qu'on peut encore charger (pour scrap)
 
 	def rapport_livres(self, format, fichier):
 		try:
@@ -90,14 +90,13 @@ class Bibli:
 
 			if format == 'PDF':
 
-
 				c = canvas.Canvas(fichier + ".pdf", bottomup=False)
 				txt_size = 10
 				c.setFont("Helvetica", txt_size)
 				pos_y = 60
 
 				for livre in self.livres:
-					if pos_y+txt_size*6 >txt_size*14*6 :
+					if pos_y + txt_size * 6 > txt_size * 14 * 6:
 						c.showPage()
 						c.setFont("Helvetica", txt_size)
 						pos_y = 60
@@ -169,7 +168,7 @@ class Bibli:
 				txt_size = 10
 				c.setFont("Helvetica", txt_size)
 				pos_y = 60
-				pos_droite = c._pagesize[0] - 10 # position de depart pour l'alignement a droite des infos
+				pos_droite = c._pagesize[0] - 10  # position de depart pour l'alignement a droite des infos
 
 				for auteur in rapport_auteurs:
 					c.drawString(60, pos_y, f'Auteur: {auteur}')
@@ -181,13 +180,13 @@ class Bibli:
 
 						# quelques superbes ouvrages ont un titre de 1 milliard de caractères, on
 						# doit donc gérer pour les découper et les afficher sur plusieurs lignes :
-						long_max_titre = txt_size*5
-						if len(str(livre.titre())) > long_max_titre :
+						long_max_titre = txt_size * 5
+						if len(str(livre.titre())) > long_max_titre:
 							c.drawRightString(pos_droite, pos_y, f'Titre: {livre.titre()[:long_max_titre]}')
 							pos_y += txt_size
 							c.drawRightString(pos_droite, pos_y, f'{livre.titre()[long_max_titre:]}')
 							pos_y += txt_size
-						else :
+						else:
 							c.drawRightString(pos_droite, pos_y, f'Titre: {livre.titre()}')
 							pos_y += txt_size
 						c.drawRightString(pos_droite, pos_y, f'Format: {livre.type()}')
@@ -243,15 +242,73 @@ class Bibli:
 		except Exception as e:
 			raise FileNotFoundError(f"Erreur lors de la génération de l'état des auteurs : {str(e)}")
 
+	def scrap(self, url, profondeur=1, nbmax=20):
+
+		print(f"\n\nScrap lancé.\n Url : {url}\n Profondeur : {profondeur}")
+
+		# on cherche dans l'url des liens vers d'autres pages.
+		# ils sont soit au format .html, soit sans format ;
+		# de style "page.fr/index.html" ou juste "page.fr/index"
+
+		# on récupère l'html du site source
+		try :
+			page = urlopen(url)
+		except HTTPError :
+			print(f'{url} : page inaccessible')
+			return self
+		html_bytes = page.read()
+		html = html_bytes.decode("utf-8")
+
+		# on récupère pour chaque format toutes les instances de type :
+		# 'href="...">'
+		# dans l'html récupéré précedemment
+
+		resultats = re.findall(pattern='href=.*?.html>', string=html)
+		resultats += re.findall(pattern='href=\"/.*?>', string=html)
+		resultats += re.findall(pattern='href=\'/.*?>', string=html)
+
+		# on termine en construisant les urls absolues des sous-pages à scraper
+		for i in range(len(resultats)):
+			start_index = resultats[i].find('=')
+			resultats[i] = resultats[i][start_index + 2:]
+			end_index = resultats[i].find('>')
+			resultats[i] = resultats[i][:end_index - 1]
+
+			resultats[i] = urljoin(url, resultats[i])
+
+
+		print(f'à {url}, on a les sous pages : {resultats}\n')
+
+		# on appelle récursivement scrap
+		if profondeur > 1:
+			nbmax = self.alimenter(url, nbmax)
+			profondeur -= 1
+			for lien_subpage in resultats:
+				if (profondeur > 0) & (nbmax > 0): # si on peut encore creuser et télécharger
+					self.scrap(lien_subpage, profondeur, nbmax)
+					# on décrémente profondeur à chaque itération de la boucle for.
+					# Ainsi, si profondeur passe à 0 dans cette boucle, on ne va pas visiter
+					# la sous page. Si plutot on avait mis "profondeur-1" dans l'appel à scrap,
+					# et que la première page contenait x liens, on les aurait tous visités
+					# QUELQUE SOIT la profondeur.
+					profondeur -= 1
+
+		elif profondeur == 1:
+			self.alimenter(url, nbmax)
+			print('Profondeur maximum atteinte.')
+			return self
+
+		else:
+			return self
+
 
 # test
 # Créez une instance de base_bibli en fournissant le chemin du répertoire
-bibli = Bibli("./Livres")
+bibli = BibliScrap("./Livres")
 
-bibli.alimenter("https://tibo.life/index3")
+bibli.scrap("https://tibo.life/livres/index3", profondeur=4, nbmax=9)
 
-
-
+"""
 # Testez la méthode rapport_livres
 
 bibli.rapport_livres('PDF', 'rapport_livres')
@@ -260,3 +317,4 @@ bibli.rapport_livres('EPUB', 'rapport_livres')
 
 bibli.rapport_auteurs('PDF', 'rapport_auteurs')
 bibli.rapport_auteurs('EPUB', 'rapport_auteurs')
+"""

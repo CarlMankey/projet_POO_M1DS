@@ -1,4 +1,3 @@
-#!/bin/env python3
 import requests
 import magic
 from ebooklib import epub
@@ -15,25 +14,24 @@ class BaseLivre:
     def __init__(self, ressource):
         self.ressource = ressource
         self.contenu = None  # initialisé à None
-        
-        try:
-            # Vérifier si ressource est une URL ou un fichier local
-            if self.est_url(ressource):
-                try:
-                   self.ajouter_depuis_url()
-                   with open(self.ressource, 'rb') as fichier:
-                       self.contenu = fichier.read()
-                except requests.exceptions.RequestException as e:
-                    print(f"Une erreur s'est produite lors de la requête HTTP : {e}")
-            else:
-                # Si c'est un fichier local, lisez simplement le contenu du fichier
-                try:
-                    with open(self.ressource, 'rb') as fichier:
-                        self.contenu = fichier.read()
-                except FileNotFoundError:
-                    print(f"Le fichier {self.ressource} n'a pas été trouvé.")
-        except Exception as e:
-            raise NotImplementedError("Erreur lors de l'initialisation du livre : {}".format(str(e)))
+
+        # Vérifier si ressource est une URL ou un fichier local
+        if self.est_url(ressource):
+            try:
+               self.ajouter_depuis_url()
+               with open(self.ressource, 'rb') as fichier:
+                   self.contenu = fichier.read()
+            except requests.exceptions.RequestException as e:
+                print(f"Une erreur s'est produite lors de la requête HTTP : {e}")
+                raise ValueError('Livre non obtenu.')
+                return None
+        else:
+            # Si c'est un fichier local, lisez simplement le contenu du fichier
+            try:
+                with open(self.ressource, 'rb') as fichier:
+                    self.contenu = fichier.read()
+            except FileNotFoundError:
+                print(f"Le fichier {self.ressource} n'a pas été trouvé.")
 
     def ajouter_depuis_url(self):
         if not os.path.exists("./Livres"):  # si le dossier qui contient les livres n'existe pas on le créé
@@ -41,6 +39,7 @@ class BaseLivre:
 
         book = requests.get(self.ressource, verify=False)  # Récupere le contenu de la page
         book.raise_for_status()
+
 
         i = self.ressource.rfind('/')   # on garde la fin de l'url pour créer le nom du fichier
         nom_fichier = self.ressource[i:]
@@ -90,7 +89,6 @@ class BaseLivre:
                 return "Contenu vide"
         except Exception as e:
             raise NotImplementedError(f"Erreur lors de la détermination de la {key}: {e}")
-            
 
     def titre(self):
         return self.extraire_les_données('title') 
