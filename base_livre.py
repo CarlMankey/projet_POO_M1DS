@@ -1,3 +1,4 @@
+#!/bin/env python3
 import requests
 import magic
 from ebooklib import epub

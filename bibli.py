@@ -1,4 +1,5 @@
-from baselivre_facto import BaseLivre
+#!/bin/env python3
+from base_livre import BaseLivre
 import os
 from reportlab.pdfgen import canvas
 from ebooklib import epub

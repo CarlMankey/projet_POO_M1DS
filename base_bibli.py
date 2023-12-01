@@ -1,4 +1,5 @@
-from baselivre_facto import BaseLivre
+#!/bin/env python3
+from base_livre import BaseLivre
 import os
 from reportlab.pdfgen import canvas
 from ebooklib import epub
@@ -169,6 +170,7 @@ class BaseBibli:
         except Exception as e:
             raise FileNotFoundError(f"Erreur lors de la génération de l'état des auteurs : {str(e)}")
 
+"""
 #test
 # Créez une instance de base_bibli en fournissant le chemin du répertoire
 bibli = BaseBibli("./Livres")
@@ -192,3 +194,4 @@ bibli.rapport_livres('PDF', 'rapport_livres')
 
 bibli.rapport_auteurs('EPUB', 'rapport_auteurs')
 
+"""

@@ -1,6 +1,6 @@
 #!/bin/env python3
-from base_livre import base_livre
-from base_bibli import base_bibli
+from base_livre import BaseLivre
+from base_bibli import BaseBibli
 
 class simple_bibli(base_bibli):
     def __init__(self, path):
