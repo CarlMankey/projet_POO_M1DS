@@ -35,8 +35,8 @@ class BaseLivre:
                 print(f"Le fichier {self.ressource} n'a pas été trouvé.")
 
     def ajouter_depuis_url(self):
-        if not os.path.exists("./Livres"):  # si le dossier qui contient les livres n'existe pas on le créé
-            os.mkdir("./Livres")
+        if not os.path.exists("../Livres"):  # si le dossier qui contient les livres n'existe pas on le créé
+            os.mkdir("../Livres")
 
         book = requests.get(self.ressource, verify=False)  # Récupere le contenu de la page
         book.raise_for_status()
@@ -130,7 +130,7 @@ livre = BaseLivre("https://math.univ-angers.fr/~jaclin/biblio/livres/defoe_moll_
 print("Type:", livre.type())
 print("Titre:",livre.titre())
 print("Auteur:", livre.auteur())
-
 """
+
 #*********************************
 

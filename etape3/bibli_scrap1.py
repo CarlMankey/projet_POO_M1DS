@@ -1,4 +1,4 @@
-#!/bin/env python3
+#! /usr/local/bin/python3.11
 from base_livre import BaseLivre
 import os
 from reportlab.pdfgen import canvas
@@ -17,17 +17,20 @@ FORMATS = ['pdf', 'epub']  # formats acceptés
 
 
 class BibliScrap:
-    def __init__(self, bibli_dir, etats_dir, nbmax): #modif
-        self.bibli_dir = bibli_dir
-        self.etats_dir = etats_dir
-        self.nbmax = nbmax
-        self.livres = []
+	def __init__(self, bibli_dir="./Livres", etats_dir="./Etats", nbmax=10): #modif
+		self.bibli_dir = bibli_dir
+		self.etats_dir = etats_dir
+		self.nbmax = nbmax
+		self.livres = []
 
-        if not os.path.exists(self.bibli_dir):
-            os.mkdir(self.bibli_dir)
-    
-    def ajouter(self, livre):
-        """Ajoute un livre à la bibliothèque s'il n'est pas déjà présent."""
+		if not os.path.exists(self.bibli_dir):
+			os.makedirs(self.bibli_dir, exist_ok=True)
+
+		if not os.path.exists(self.etats_dir):
+			os.makedirs(self.etats_dir, exist_ok=True)
+
+	def ajouter(self, livre):
+		"""Ajoute un livre à la bibliothèque s'il n'est pas déjà présent."""
 
 		# On vérifie si le livre passé en argument est une instance de la classe BaseLivre.
 		if not isinstance(livre, BaseLivre):
@@ -243,7 +246,7 @@ class BibliScrap:
 		except Exception as e:
 			raise FileNotFoundError(f"Erreur lors de la génération de l'état des auteurs : {str(e)}")
 
-	def scrap(self, url, profondeur=1, nbmax=20):
+	def scrap(self, url, profondeur=1):
 
 		print(f"\n\nScrap lancé.\n Url : {url}\n Profondeur : {profondeur}")
 
@@ -282,11 +285,11 @@ class BibliScrap:
 
 		# on appelle récursivement scrap
 		if profondeur > 1:
-			nbmax = self.alimenter(url, nbmax)
+			self.nbmax = self.alimenter(url, self.nbmax)
 			profondeur -= 1
 			for lien_subpage in resultats:
-				if (profondeur > 0) & (nbmax > 0): # si on peut encore creuser et télécharger
-					self.scrap(lien_subpage, profondeur, nbmax)
+				if (profondeur > 0) & (self.nbmax > 0): # si on peut encore creuser et télécharger
+					self.scrap(lien_subpage, profondeur)
 					# on décrémente profondeur à chaque itération de la boucle for.
 					# Ainsi, si profondeur passe à 0 dans cette boucle, on ne va pas visiter
 					# la sous page. Si plutot on avait mis "profondeur-1" dans l'appel à scrap,
@@ -295,19 +298,20 @@ class BibliScrap:
 					profondeur -= 1
 
 		elif profondeur == 1:
-			self.alimenter(url, nbmax)
+			self.alimenter(url, self.nbmax)
 			print('Profondeur maximum atteinte.')
 			return self
 
 		else:
 			return self
 
-
+"""
 # test
 # Créez une instance de base_bibli en fournissant le chemin du répertoire
-bibli = BibliScrap("./Livres")
+bibli = BibliScrap("./Livres", "./Etats")
 
-bibli.scrap("https://tibo.life/livres/index3", profondeur=4, nbmax=9)
+bibli.scrap("https://tibo.life/livres/index3", profondeur=5)
+"""
 
 """
 # Testez la méthode rapport_livres

@@ -1,5 +1,5 @@
-#!/bin/env python3
-from base_livre import BaseLivre
+#! /usr/local/bin/python3.11
+from ProjetFinal.projet_POO_M1DS.etape3.base_livre import BaseLivre
 import os
 from reportlab.pdfgen import canvas
 from ebooklib import epub
@@ -25,6 +25,13 @@ class BibliScrap:
 		# Vérifier si le répertoire existe
 		if not os.path.exists(self.path):
 			os.mkdir(self.path)
+		# sinon, on charge les livres déjà présents
+		else :
+			for fichier in os.listdir(path):
+				# on vérifie si le fichier est un livre pris en charge par le programme
+				if os.path.splitext(fichier) in FORMATS:
+					self.ajouter(path + fichier)
+
 
 	def ajouter(self, livre):
 		"""Ajoute un livre à la bibliothèque s'il n'est pas déjà présent."""
@@ -302,12 +309,13 @@ class BibliScrap:
 		else:
 			return self
 
-
+"""
 # test
 # Créez une instance de base_bibli en fournissant le chemin du répertoire
 bibli = BibliScrap("./Livres")
 
 bibli.scrap("https://tibo.life/livres/index3", profondeur=4, nbmax=9)
+"""
 
 """
 # Testez la méthode rapport_livres
