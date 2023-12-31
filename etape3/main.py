@@ -16,8 +16,8 @@ def load_config(config_file):
 def main():
 	parser = argparse.ArgumentParser(description="Bibli Application")
 	parser.add_argument("-c", "--config", help="Spécifiez le fichier de configuration")
-	parser.add_argument("command", choices=["collect", "rapports"], help="Commande à exécuter")
 	parser.add_argument("url", nargs="?", help="URL pour collectionner des livres")
+	parser.add_argument("command", nargs="?", choices=["collect", "rapports"], const="collect",  help="Commande à exécuter")
 
 	args = parser.parse_args()
 

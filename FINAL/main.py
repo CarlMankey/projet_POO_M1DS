@@ -16,10 +16,13 @@ def load_config(config_file):
 def main():
 	parser = argparse.ArgumentParser(description="Bibli Application")
 	parser.add_argument("-c", "--config", help="Spécifiez le fichier de configuration")
-	parser.add_argument("command", choices=["collect", "reports"], help="Commande à exécuter")
 	parser.add_argument("url", nargs="?", help="URL pour collectionner des livres")
+	parser.add_argument("profondeur", nargs="?", help="profondeur de la recherche")
+	parser.add_argument("command", nargs="?", choices=["collect", "rapports"], default="collect",
+						help="Commande à exécuter")
 
 	args = parser.parse_args()
+	print(args)
 
 	config_file = args.config or "bibli_conf.ini"
 	config = load_config(config_file)
@@ -34,11 +37,11 @@ def main():
 											  nbmax=config.getint("Parameters", "nbmax"))
 		print(f"{bibli_scrap.bibli_dir=}, {bibli_scrap.etats_dir=}")
 		_nbmax = bibli_scrap.nbmax  # scrap modifie la valeur self.nbmax. On la sauve ici avant le scrap...
-		bibli_scrap.scrap(args.url, profondeur=1)
+		bibli_scrap.scrap(args.url, profondeur=int(args.profondeur))
 		bibli_scrap.nbmax = _nbmax  # ... on restaure la valeur de self.nbmax
 
 
-	elif args.command == "reports":
+	elif args.command == "rapports":
 		bibli_scrap = bibli_scrap1.BibliScrap(config.get("Directories", "bibliotheque"))
 
 		# le script génère les rapports en PDF et EPUB avec les mêmes noms de fichier (rapport_livres et
