@@ -1,7 +1,7 @@
 #! /usr/local/bin/python3.11
 import sys
 
-from bibli_scrap1 import BibliScrap
+import bibli_scrap1
 from datetime import datetime
 import argparse
 import configparser
@@ -29,9 +29,9 @@ def main():
 			print("Veuillez fournir l'URL de collecte de livres.")
 			return
 
-		bibli_scrap = BibliScrap(config.get("Directories", "bibliotheque"),
-								 config.get("Directories", "etats"),
-								 nbmax=config.getint("Parameters", "nbmax"))
+		bibli_scrap = bibli_scrap1.BibliScrap(config.get("Directories", "bibliotheque"),
+											  config.get("Directories", "etats"),
+											  nbmax=config.getint("Parameters", "nbmax"))
 		print(f"{bibli_scrap.bibli_dir=}, {bibli_scrap.etats_dir=}")
 		_nbmax = bibli_scrap.nbmax  # scrap modifie la valeur self.nbmax. On la sauve ici avant le scrap...
 		bibli_scrap.scrap(args.url, profondeur=1)
@@ -39,7 +39,7 @@ def main():
 
 
 	elif args.command == "reports":
-		bibli_scrap = BibliScrap(config.get("Directories", "bibliotheque"))
+		bibli_scrap = bibli_scrap1.BibliScrap(config.get("Directories", "bibliotheque"))
 
 		# le script génère les rapports en PDF et EPUB avec les mêmes noms de fichier (rapport_livres et
 		# rapport_auteurs). Cela pourrait entraîner l'écrasement des fichiers précédemment générés. Pour éviter cela,

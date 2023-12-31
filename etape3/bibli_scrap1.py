@@ -25,6 +25,10 @@ class BibliScrap:
 
 		if not os.path.exists(self.bibli_dir):
 			os.makedirs(self.bibli_dir, exist_ok=True)
+		else :
+			deja_present = os.listdir(self.bibli_dir)
+			for fichier in deja_present :
+				self.ajouter(BaseLivre(os.path.join(self.bibli_dir, fichier), self))
 
 		if not os.path.exists(self.etats_dir):
 			os.makedirs(self.etats_dir, exist_ok=True)
@@ -76,7 +80,7 @@ class BibliScrap:
 
 		for lien in resultats[:min(nbmax,len(resultats))]: # on télécharge au maximum nbmax livres
 			try:
-				livre = BaseLivre(lien)
+				livre = BaseLivre(lien, self)
 				self.ajouter(livre)
 				nbmax -= 1
 			except ValueError as e:
@@ -86,13 +90,13 @@ class BibliScrap:
 
 		return nbmax  # permet de compter le nombre de livres qu'on peut encore charger (pour scrap)
 
-	def rapport_livres(self, format, fichier):
+	def rapport_livres(self, _format, fichier):
 		try:
-			format = format.upper()  # Convertir le format en majuscules pour la comparaison
-			if format not in ['EPUB', 'PDF']:
+			_format = _format.upper()  # Convertir le format en majuscules pour la comparaison
+			if _format not in ['EPUB', 'PDF']:
 				raise ValueError("Le format doit être 'EPUB' ou 'PDF'.")
 
-			if format == 'PDF':
+			if _format == 'PDF':
 
 				c = canvas.Canvas(fichier + ".pdf", bottomup=False)
 				txt_size = 10
@@ -118,7 +122,7 @@ class BibliScrap:
 				c.save()
 				print(f"Le rapport a été généré avec succès dans le fichier {fichier}.")
 
-			elif format == 'EPUB':
+			elif _format == 'EPUB':
 
 				rapport = ""
 				for livre in self.livres:
