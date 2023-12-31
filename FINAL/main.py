@@ -32,7 +32,7 @@ def main():
 			print("Veuillez fournir l'URL de collecte de livres.")
 			return
 
-		bibli_scrap = bibli_scrap1.BibliScrap(config.get("Directories", "bibliotheque"),
+		bibli_scrap = bibli_scrap1.BibliScrap(config.get("Directories", "livres"),
 											  config.get("Directories", "etats"),
 											  nbmax=config.getint("Parameter", "nbmax"))
 		print(f"{bibli_scrap.bibli_dir=}, {bibli_scrap.etats_dir=}")
@@ -42,7 +42,7 @@ def main():
 
 
 	elif args.command == "rapports":
-		bibli_scrap = bibli_scrap1.BibliScrap(config.get("Directories", "bibliotheque"))
+		bibli_scrap = bibli_scrap1.BibliScrap(config.get("Directories", "livres"))
 
 		# le script génère les rapports en PDF et EPUB avec les mêmes noms de fichier (rapport_livres et
 		# rapport_auteurs). Cela pourrait entraîner l'écrasement des fichiers précédemment générés. Pour éviter cela,
