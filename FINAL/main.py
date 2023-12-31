@@ -34,7 +34,7 @@ def main():
 
 		bibli_scrap = bibli_scrap1.BibliScrap(config.get("Directories", "bibliotheque"),
 											  config.get("Directories", "etats"),
-											  nbmax=config.getint("Parameters", "nbmax"))
+											  nbmax=config.getint("Parameter", "nbmax"))
 		print(f"{bibli_scrap.bibli_dir=}, {bibli_scrap.etats_dir=}")
 		_nbmax = bibli_scrap.nbmax  # scrap modifie la valeur self.nbmax. On la sauve ici avant le scrap...
 		bibli_scrap.scrap(args.url, profondeur=int(args.profondeur))
